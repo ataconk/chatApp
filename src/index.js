@@ -39,8 +39,8 @@ io.on('connection', (socket)=> {
     })
 
     socket.on('sendLocation',(loc,cb) =>{
-        io.emit('message', `https://google.com/maps?q=${loc.latitude},${loc.longitude}`)
-        cb('Location is shared')
+        io.emit('locationMessage', `https://google.com/maps?q=${loc.latitude},${loc.longitude}`)
+        cb()
     })
 
 })
