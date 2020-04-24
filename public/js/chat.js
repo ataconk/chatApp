@@ -4,11 +4,25 @@ const SendButton = document.querySelector('#SendButton')
 const locButton = document.querySelector('#location')
 const $messages = document.querySelector('#messages')
 
-
+//templates
 const locTemplate = document.querySelector('#loc-template').innerHTML
 const messageTemplate = document.querySelector('#message-template').innerHTML
+const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML
+
+const urlParams = new URLSearchParams(window.location.search);
+const username = urlParams.get('username');
+const room = urlParams.get('room');
 
 const socket = io()
+//options
+
+// const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true })
+
+const autoScroll = () => {
+ 
+    $messages.scrollTop = $messages.scrollHeight
+}
+
 
 MessageForm.addEventListener('submit', (e) =>{
     e.preventDefault()
@@ -26,6 +40,14 @@ MessageForm.addEventListener('submit', (e) =>{
         console.log('Message Delivered')
     })
 
+})
+socket.on('roomData', ({room, users}) => {
+    const html = Mustache.render(sidebarTemplate, {
+        room,
+        users
+    })
+
+    document.querySelector('#sidebar').innerHTML =html
 })
 
 locButton.addEventListener('click',()=> {
@@ -53,13 +75,29 @@ locButton.addEventListener('click',()=> {
 
 socket.on('message', (message) => {
     console.log( message)
-    const html = Mustache.render(messageTemplate, {message} )
+    const html = Mustache.render(messageTemplate, {
+        username: message.username,
+        message: message.text,
+        createdAt: moment(message.createdAt).format('h:mm a')
+    })
     $messages.insertAdjacentHTML('beforeend',html)
+    autoScroll()
+})
+socket.on('locationMessage', (message) => {
+    // console.log( url)
+    const html = Mustache.render(locTemplate, {
+        username:message.username,
+        url:message.url,
+        createdAt: moment(message.createdAt).format('h:mm a')
+    })
+    $messages.insertAdjacentHTML('beforeend',html)
+    autoScroll()
 })
 
-socket.on('locationMessage', (url) => {
-    console.log( url)
-    const html = Mustache.render(locTemplate, {url})
-    $messages.insertAdjacentHTML('beforeend',html)
-})
+socket.emit('join', {username, room}, (error)=> {
+    if(error) {
+        alert(error)
+        location.href= '/'
+    }
 
+})
